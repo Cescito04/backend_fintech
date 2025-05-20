@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: laravel-app
+    runtime: docker
+    plan: free
+    buildCommand: ""
+    startCommand: "apache2-foreground"
