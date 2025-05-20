@@ -31,9 +31,6 @@ RUN composer install --no-dev --no-scripts --optimize-autoloader
 # Copy the rest of the application
 COPY . .
 
-# Generate application key if not exists
-RUN php artisan key:generate --force
-
 # Final stage
 FROM php:8.2-apache
 
