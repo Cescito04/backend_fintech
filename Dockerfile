@@ -45,7 +45,16 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Configure Apache
+# Remove default Apache virtual host file
+RUN rm /etc/apache2/sites-available/000-default.conf
+
+# Add custom Apache virtual host file
+COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
+
+# Enable the new virtual host
+RUN a2ensite 000-default.conf
+
+# Configure Apache (keep this as a fallback/additional config)
 RUN echo '<Directory /var/www/html/>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
