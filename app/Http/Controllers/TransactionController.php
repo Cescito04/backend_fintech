@@ -2,43 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
-use App\Models\User;
+use App\Services\TransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Tag(
  *     name="Transactions",
- *     description="API Endpoints for managing transactions"
+ *     description="API Endpoints for managing transactions, transfers and recharges"
  * )
  */
 class TransactionController extends Controller
 {
+    protected $transactionService;
+
+    public function __construct(TransactionService $transactionService)
+    {
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/transactions",
      *     tags={"Transactions"},
-     *     summary="Get user's transactions",
+     *     summary="Get user's transaction history",
+     *     description="Retrieve all transactions (recharges, sent and received transfers) for the authenticated user",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="List of transactions",
+     *         description="Transaction history",
      *         @OA\JsonContent(
-     *             @OA\Property(property="transactions", type="array", @OA\Items(type="object"))
+     *             type="array",
+     *             @OA\Items(
+     *                 oneOf={
+     *                     @OA\Schema(
+     *                         @OA\Property(property="type", type="string", example="recharge"),
+     *                         @OA\Property(property="amount", type="number", format="float", example=10000),
+     *                         @OA\Property(property="provider", type="string", example="Wave"),
+     *                         @OA\Property(property="date", type="string", format="date-time", example="2025-05-18 10:15")
+     *                     ),
+     *                     @OA\Schema(
+     *                         @OA\Property(property="type", type="string", example="sent"),
+     *                         @OA\Property(property="amount", type="number", format="float", example=3000),
+     *                         @OA\Property(property="to", type="object",
+     *                             @OA\Property(property="first_name", type="string", example="Awa"),
+     *                             @OA\Property(property="last_name", type="string", example="Diop"),
+     *                             @OA\Property(property="phone_number", type="string", example="771234567")
+     *                         ),
+     *                         @OA\Property(property="date", type="string", format="date-time", example="2025-05-17 15:40")
+     *                     ),
+     *                     @OA\Schema(
+     *                         @OA\Property(property="type", type="string", example="received"),
+     *                         @OA\Property(property="amount", type="number", format="float", example=5000),
+     *                         @OA\Property(property="from", type="object",
+     *                             @OA\Property(property="first_name", type="string", example="Moussa"),
+     *                             @OA\Property(property="last_name", type="string", example="Sow"),
+     *                             @OA\Property(property="phone_number", type="string", example="770123456")
+     *                         ),
+     *                         @OA\Property(property="date", type="string", format="date-time", example="2025-05-16 08:00")
+     *                     )
+     *                 }
+     *             )
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
-    public function index(Request $request)
+    public function getTransactionsHistory(Request $request)
     {
-        $transactions = $request->user()->transactions()
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'transactions' => $transactions,
-        ]);
+        return response()->json(
+            $this->transactionService->getTransactionsHistory($request->user()->id)
+        );
     }
 
     /**
@@ -46,55 +82,49 @@ class TransactionController extends Controller
      *     path="/api/recharge",
      *     tags={"Transactions"},
      *     summary="Recharge user's balance",
+     *     description="Add funds to user's account through a payment provider",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"amount"},
-     *             @OA\Property(property="amount", type="number", format="float", example=1000)
+     *             required={"amount","provider"},
+     *             @OA\Property(property="amount", type="number", format="float", example=5000, description="Amount to recharge"),
+     *             @OA\Property(property="provider", type="string", example="Wave", description="Payment provider name"),
+     *             @OA\Property(property="transaction_id", type="string", example="WAVETX123456", description="Provider's transaction ID (optional)")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Recharge successful",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Recharge effectuée avec succès"),
-     *             @OA\Property(property="transaction", type="object"),
-     *             @OA\Property(property="new_balance", type="number", format="float")
+     *             @OA\Property(property="message", type="string", example="Recharge effectuée avec succès."),
+     *             @OA\Property(property="new_balance", type="string", example="17000.00")
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
     public function recharge(Request $request)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'provider' => ['required', 'string'],
+            'transaction_id' => ['nullable', 'string'],
         ]);
 
-        DB::beginTransaction();
-
         try {
-            $transaction = Transaction::create([
-                'user_id' => $request->user()->id,
-                'type' => 'recharge',
-                'amount' => $request->amount,
-                'description' => 'Recharge de compte',
-                'status' => 'completed',
-            ]);
-
-            $request->user()->increment('balance', $request->amount);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Recharge effectuée avec succès',
-                'transaction' => $transaction,
-                'new_balance' => $request->user()->balance,
-            ]);
+            $result = $this->transactionService->recharge($request->user()->id, $validated);
+            return response()->json($result);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
-                'message' => 'Erreur lors de la recharge',
+                'message' => 'Une erreur est survenue lors de la recharge.'
             ], 500);
         }
     }
@@ -104,13 +134,14 @@ class TransactionController extends Controller
      *     path="/api/transfer",
      *     tags={"Transactions"},
      *     summary="Transfer money to another user",
+     *     description="Send money to another user using their phone number",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"amount","recipient_phone"},
-     *             @OA\Property(property="amount", type="number", format="float", example=500),
-     *             @OA\Property(property="recipient_phone", type="string", example="+221777777777")
+     *             @OA\Property(property="amount", type="number", format="float", example=500, description="Amount to transfer"),
+     *             @OA\Property(property="recipient_phone", type="string", example="+221777777777", description="Recipient's phone number")
      *         )
      *     ),
      *     @OA\Response(
@@ -118,9 +149,23 @@ class TransactionController extends Controller
      *         description="Transfer successful",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Transfert effectué avec succès"),
-     *             @OA\Property(property="transaction", type="object"),
-     *             @OA\Property(property="new_balance", type="number", format="float")
+     *             @OA\Property(property="new_balance", type="number", format="float", example=15000.00)
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Solde insuffisant")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
@@ -128,50 +173,20 @@ class TransactionController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:0',
-            'recipient_phone' => 'required|string|exists:users,phone',
+            'recipient_phone' => 'required|string|exists:users,phone_number',
         ]);
 
-        if ($request->user()->phone === $request->recipient_phone) {
-            return response()->json([
-                'message' => 'Vous ne pouvez pas transférer à votre propre compte',
-            ], 400);
-        }
-
-        if ($request->user()->balance < $request->amount) {
-            return response()->json([
-                'message' => 'Solde insuffisant',
-            ], 400);
-        }
-
-        DB::beginTransaction();
-
         try {
-            $recipient = User::where('phone', $request->recipient_phone)->first();
-
-            $transaction = Transaction::create([
-                'user_id' => $request->user()->id,
-                'type' => 'transfer',
-                'amount' => $request->amount,
-                'description' => 'Transfert d\'argent',
-                'recipient_phone' => $request->recipient_phone,
-                'status' => 'completed',
-            ]);
-
-            $request->user()->decrement('balance', $request->amount);
-            $recipient->increment('balance', $request->amount);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Transfert effectué avec succès',
-                'transaction' => $transaction,
-                'new_balance' => $request->user()->balance,
-            ]);
+            $result = $this->transactionService->transfer(
+                $request->user()->id,
+                $request->recipient_phone,
+                $request->amount
+            );
+            return response()->json($result);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
-                'message' => 'Erreur lors du transfert',
-            ], 500);
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 
@@ -180,20 +195,25 @@ class TransactionController extends Controller
      *     path="/api/balance",
      *     tags={"Transactions"},
      *     summary="Get user's current balance",
+     *     description="Retrieve the current balance of the authenticated user",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="Current balance",
      *         @OA\JsonContent(
-     *             @OA\Property(property="balance", type="number", format="float")
+     *             @OA\Property(property="balance", type="number", format="float", example=15000.00)
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
     public function balance(Request $request)
     {
-        return response()->json([
-            'balance' => $request->user()->balance,
-        ]);
+        return response()->json(
+            $this->transactionService->getBalance($request->user()->id)
+        );
     }
 }

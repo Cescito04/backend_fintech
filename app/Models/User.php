@@ -21,8 +21,8 @@ class User extends Authenticatable
     protected $fillable = [
         'first_name',
         'last_name',
-        'phone',
-        'pin',
+        'phone_number',
+        'pin_code',
         'balance',
     ];
 
@@ -32,7 +32,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'pin',
+        'pin_code',
         'remember_token',
     ];
 
@@ -51,6 +51,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'balance' => 'decimal:2',
+        'pin_code' => 'hashed',
     ];
 
     public function transactions()

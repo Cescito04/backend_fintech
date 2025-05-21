@@ -63,10 +63,29 @@
                                             "example": "Inscription réussie"
                                         },
                                         "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "+221777777777"
+                                                }
+                                            },
                                             "type": "object"
                                         },
                                         "token": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGci..."
                                         }
                                     },
                                     "type": "object"
@@ -120,10 +139,29 @@
                                             "example": "Connexion réussie"
                                         },
                                         "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "+221777777777"
+                                                }
+                                            },
                                             "type": "object"
                                         },
                                         "token": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGci..."
                                         }
                                     },
                                     "type": "object"
@@ -185,20 +223,25 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer"
+                                                        "type": "integer",
+                                                        "example": 1
                                                     },
                                                     "first_name": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "John"
                                                     },
                                                     "last_name": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Doe"
                                                     },
-                                                    "phone": {
-                                                        "type": "string"
+                                                    "phone_number": {
+                                                        "type": "string",
+                                                        "example": "+221777777777"
                                                     },
                                                     "balance": {
                                                         "type": "number",
-                                                        "format": "float"
+                                                        "format": "float",
+                                                        "example": 0
                                                     },
                                                     "created_at": {
                                                         "type": "string",
@@ -217,6 +260,145 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{user}": {
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update user profile",
+                "operationId": "9e6a6e7ff3e52f60148e6e47710e2978",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+221777777777"
+                                    },
+                                    "pin": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profil mis à jour avec succès"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "+221777777777"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized to update this account"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Delete user account",
+                "operationId": "867e059741684e0a51312678d7fb9304",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized to delete this account"
                     }
                 },
                 "security": [
@@ -419,7 +601,7 @@
     "tags": [
         {
             "name": "Authentication",
-            "description": "API Endpoints for user authentication"
+            "description": "API Endpoints for user authentication and management"
         },
         {
             "name": "Transactions",

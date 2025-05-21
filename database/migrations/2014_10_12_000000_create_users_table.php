@@ -12,9 +12,8 @@ return new class extends Migration
             $table->id();
             $table->string('first_name');
             $table->string('last_name');
-            $table->string('phone')->unique();
-            $table->string('pin');
-            $table->decimal('balance', 10, 2)->default(0);
+            $table->string('phone_number')->unique();
+            $table->string('pin_code');
             $table->rememberToken();
             $table->timestamps();
         });
