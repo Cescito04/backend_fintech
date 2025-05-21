@@ -1,61 +1,123 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Backend Fintech API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ce projet est une API backend développée avec Laravel pour une application mobile fintech. Il fournit des fonctionnalités essentielles pour la gestion des utilisateurs, des transactions et des recharges.
 
-## About Laravel
+## Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Authentification
+- Inscription des utilisateurs
+- Connexion avec génération de token Sanctum
+- Déconnexion avec révocation du token
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Gestion des Utilisateurs
+- Création de compte avec informations personnelles
+- Gestion du solde virtuel
+- Profil utilisateur
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Transactions
+- Historique des transactions
+- Détails des transactions (montant, type, statut, date)
+- Suivi des transactions en temps réel
 
-## Learning Laravel
+### Recharges
+- Recharge du solde virtuel
+- Historique des recharges
+- Statut des recharges
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Architecture Technique
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Technologies Utilisées
+- Laravel 10.x
+- PHP 8.x
+- MySQL
+- Laravel Sanctum pour l'authentification API
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Structure du Projet
+```
+backend_fintech/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── AuthController.php
+│   │   │   ├── TransactionController.php
+│   │   │   └── UserController.php
+│   │   └── Middleware/
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Transaction.php
+│   │   └── Recharge.php
+│   └── Services/
+├── database/
+│   └── migrations/
+│       ├── create_users_table.php
+│       ├── create_transactions_table.php
+│       └── create_recharges_table.php
+└── routes/
+    └── api.php
+```
 
-## Laravel Sponsors
+### Base de Données
+- Table `users`: Informations utilisateurs et solde
+- Table `transactions`: Historique des transactions
+- Table `recharges`: Gestion des recharges
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Installation
 
-### Premium Partners
+1. Cloner le repository
+```bash
+git clone [URL_DU_REPO]
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+2. Installer les dépendances
+```bash
+composer install
+```
 
-## Contributing
+3. Configurer l'environnement
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. Configurer la base de données dans le fichier `.env`
 
-## Code of Conduct
+5. Exécuter les migrations
+```bash
+php artisan migrate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. Démarrer le serveur
+```bash
+php artisan serve
+```
 
-## Security Vulnerabilities
+## API Endpoints
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Authentification
+- `POST /api/register` - Inscription
+- `POST /api/login` - Connexion
+- `POST /api/logout` - Déconnexion
 
-## License
+### Utilisateurs
+- `GET /api/user` - Profil utilisateur
+- `GET /api/user/balance` - Solde utilisateur
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Transactions
+- `GET /api/transactions` - Historique des transactions
+- `GET /api/transactions/{id}` - Détails d'une transaction
+
+### Recharges
+- `POST /api/recharges` - Créer une recharge
+- `GET /api/recharges` - Historique des recharges
+
+## Sécurité
+- Authentification via Laravel Sanctum
+- Protection CSRF
+- Validation des données
+- Rate limiting sur les endpoints sensibles
+
+## Contribution
+Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+
+## Licence
+Ce projet est sous licence MIT.
